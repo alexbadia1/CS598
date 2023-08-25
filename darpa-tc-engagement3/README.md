@@ -13,6 +13,12 @@ To provide some intuition as to what is happening in the attacks, we provide vis
 ### theia_3.3_fail_allstate
 ![theia_3.3_fail_allstate](imgs/theia_3.3_fail_allstate.png)
 
+### theia_3.3_fail_gatech_clean
+![theia_3.3_fail_gatech_clean](imgs/theia_3.3_fail_gatech_clean.png)
+
+### theia_3.3_success_gatech_profile
+![theia_3.3_success_gatech_profile](imgs/theia_3.3_success_gatech_profile)
+
 ## Other Notes
 
 ### Missing Data
