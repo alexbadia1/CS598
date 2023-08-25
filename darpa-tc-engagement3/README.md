@@ -17,7 +17,13 @@ To provide some intuition as to what is happening in the attacks, we provide vis
 ![theia_3.3_fail_gatech_clean](imgs/theia_3.3_fail_gatech_clean.png)
 
 ### theia_3.3_success_gatech_profile
-![theia_3.3_success_gatech_profile](imgs/theia_3.3_success_gatech_profile)
+![theia_3.3_success_gatech_profile](imgs/theia_3.3_success_gatech_profile.png)
+
+### theia_3.11_fail
+![theia_3.11_fail](imgs/theia_3.11_fail.png)
+
+### theia_3.11_success
+~[theia_3.11_success](imgs/theia_3.11_success.png)
 
 ## Other Notes
 
