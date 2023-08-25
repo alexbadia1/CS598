@@ -1,48 +1,28 @@
-# Recommended Process
-These attack subgraphs were created via reading the ground truth report and
-manual inspection of provenance graphs created from the logs. While we tried
-some automated methods by doing selective graph traversals, due to a
-combination of many factors such as missing logs and ambiguities in graph
-construction, we ultimately found automated methods to be too unreliable
-relative to manual inspection.
-
-Because not all log events are relevant to provenance, the graphs only contain
-a subset of all events. Therefore, after creating subgraphs containing our
-relevant provenance events, we also create a second label that appends all
-events related to graph objects. This raises a second question: what about
-objects (e.g., processes) that have mixed benign and malicious activity, such
-as compromised servers or long-running processes? For such objects, we assume
-there is a clear transition from benign to malicious that happens at the first
-event in our attack subgraph. Therefore, any events after this transition
-should be considered attack behaviors, while any events before should be
-considered benign.
-
-For each attack, manual tracing was largely achieved by starting from some
-known point of entry (e.g., shellcode servers or malicious URLs) and then
-tracing the process tree from that point onwards. This largely works until
-missing log data causes unexpected breaks in the process tree that require
-apparently separated subtrees to be merged, even though they logically should
-be parts of the same tree.
-
 # DARPA TC Engagement 3
-We provide the Engagement 3 attack labels as lists of attack event UUIDs. For
-each reported attack in the ground truth, we have one or more corresponding
-`xz`'d files under `darpa-tc-engagement3` containing one attack event UUID per
-line.
+
+We provide labels for all processes that are *malicious* (label=attack) or *contaminated* by the attack (label=contaminated). 
+
+We provide labels for all processes that are *malicious* (label=attack) or *contaminated* by the attack (label=contaminated). All other processes in the dataset are benign. The ground truth document, [available with the dataset](https://github.com/darpa-i2o/Transparent-Computing/blob/master/README-E3.md), contains additional information about each attack. We provide labels for the "Nation State" attacks, but not the "Common Threat" attacks because many of the common threat attacks are indistinguishable from normal user activity in the log files.
+
+Each attack attempt is assigned a label according to the section number in the ground truth document. Several of the attack attempts took multiple tries to succeed, so we further divide the attack attempts into *success* and *fail* states. We do not recommend testing against the failed attack attempts because, like the common threats, they typically did not lead to a meaningful attack footprint on the target machines.
+
+## Visualizations
+
+To provide some intuition as to what is happening in the attacks, we provide visualizations for each. Nodes the we identified as root causes are colored red, while nodes that we identified as attack impacts are colored green. Processes that make up the attack chain are colored yellow. We have simplified the graphs for visualization purposes (deduplicated edges, merged nodes with the same label, merged multi-process programs into a single node). Thus, there are many more attack processes in the label set than appear in the visualization.
+
+## Other Notes
+
+### Missing Data
+
+The E3 dataset suffer from missing vertex labels to varying extents. The primary cause for this appears to be key system calls that audit frameworks missed because they weren't turned on yet. For example, if a file is `opened` before capture begins but `read` afterwards, the framework is aware that a data entity is accessed but can no longer recover the filename. The same is true for programs that were `exec`'d before capture started; the PID is referenced but the executable name is lost. If an unlabeled process appears in the attack path it is always marked as *contaminated,* not attack, as it is not possible to verify using the ground truth.
+
+### Timing information
 
 Note that the ground truth reports timestamps which are very useful for
 correlating events in the provenance graph. These timestamps are unmarked; by
 inference (since Kudu Dynamics is based in Maryland and the dataset was
 collected in April) and some validation checking, we found the correct
 timezone to be EDT, i.e., UTC-4.
-
-The ground truth describes both a "Nation State" attack and "Common Threat"
-attack. We create attack subgraphs for the Nation State attacks when possible,
-but ignore the Common Threat attacks that are purely phishing as it is
-debatable whether or not these behaviors are distinguishable from benign user
-activity. Some of the phishing attacks cause malware to be run, which should
-be more observable, so we do try to create subgraphs specifically targeting
-the malware.
 
 ## Why not ClearScope?
 We don't include any labeling for ClearScope because the timestamps of
