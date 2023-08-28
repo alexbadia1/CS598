@@ -24,7 +24,7 @@ To provide some intuition as to what is happening in the attacks, we provide vis
 
 ![theia_3.3_success_gatech_profile](imgs/theia_3.3_success_gatech_profile.png)
 
-### 3.3 2018-04-12 THEIA – Browser Extension w/ Drakon Dropper
+### 3.11 2018-04-12 THEIA – Browser Extension w/ Drakon Dropper
 
 *FAIL: Memory injection attempt to SSHD did not work*
 
