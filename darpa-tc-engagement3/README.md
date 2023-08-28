@@ -10,7 +10,7 @@ Each attack attempt is assigned a label according to the section number in the g
 
 To provide some intuition as to what is happening in the attacks, we provide visualizations for each. Nodes the we identified as root causes are colored red, while nodes that we identified as attack impacts are colored green. Processes that make up the attack chain are colored yellow. We have simplified the graphs for visualization purposes (deduplicated edges, merged nodes with the same label, merged multi-process programs into a single node). Thus, there are many more attack processes in the label set than appear in the visualization.
 
-### 3.3 20180410 1400 THEIA – Firefox Backdoor w/ Drakon In-Memory
+### 3.3 2018-04-10 1400 THEIA – Firefox Backdoor w/ Drakon In-Memory
 
 *FAIL: First attempt via allstate.com ad*
 
@@ -24,10 +24,14 @@ To provide some intuition as to what is happening in the attacks, we provide vis
 
 ![theia_3.3_success_gatech_profile](imgs/theia_3.3_success_gatech_profile.png)
 
-### theia_3.11_fail
+### 3.3 2018-04-12 THEIA – Browser Extension w/ Drakon Dropper
+
+*FAIL: Memory injection attempt to SSHD did not work*
+
 ![theia_3.11_fail](imgs/theia_3.11_fail.png)
 
-### theia_3.11_success
+*SUCCESS: Micro APT written to disk instead*
+
 ![theia_3.11_success](imgs/theia_3.11_success.png)
 
 ## Other Notes
