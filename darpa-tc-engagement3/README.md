@@ -72,50 +72,6 @@ ClearScope seem to be in arbitrary units (e.g., like a monotonic system
 clock). This makes it difficult to verify events based on their timestamps, so
 we ignore ClearScope for now.
 
-## THEIA notes
-First, we focus on the Nation State attacks in E3 THEIA: one via a malicious
-extension `pass_mgr`, and another via process injection directly in Firefox
-processes. The report has the injection attacks in section 3.3 and the
-extension attacks in section 3.11.
-
-For each attack type, there is one successful attack and also some failed
-attempts. For completeness, we created subgraphs for all observed attacker
-behaviors, even the failed ones.
-
-Note that THEIA clearly had some lost logs during capture, as indicated by
-both the ground truth report and the operational log. This directly manifests
-in the observed subgraphs, which are missing some key logs. For example, some
-of the initial attack steps such as malicious ad servers reported in the
-ground truth report don't seem to appear in the logs themselves. In these
-cases, we tried our best to include what initial attack steps we could, but a
-couple of events may be missing here. Essentially all of our attack traces
-started from the reported shellcode server IP addresses, as the malicious ad
-servers generally don't appear in the logs.
-
-Another example: both successful attacks involve an extra malicious process
-(`/home/admin/profile` and `/var/log/mail`) that should be forked somewhere
-based on UNIX process semantics. However, in the logs, these processes "appear
-out of nowhere", i.e., they are the roots of their own process trees, and are
-furthermore executed from files with missing data (specifically, we don't know
-the file paths). Unless an automated method somehow anticipates these details
-without overapproximating other portions of the attack, this simply
-demonstrates why manual inspection is necessary to correctly reconstruct the
-attack.
-
-Although we've discussed the attacks as though they are separate, in reality
-operational errors made the attackers decide to use the first attack
-(specifically, the malicious `/home/admin/profile` process) to bootstrap the
-second attack's `/var/log/mail` process. Rather than replicate all of the
-`profile` attack in the `mail` attack, we simply start from the `profile`
-process and don't label anything preceeding that.
-
-### 4.8: THEIA tcexec
-We found `tcexec` in the logs, although as the ground truth indicates, the
-attack failed and `tcexec` didn't really do anything interesting. Furthermore,
-it was manually downloaded and executed, so it's debatable whether it should
-even be considered attacker behavior. We reproduced the tiny subgraph anyways
-just in case it is ever needed.
-
 ## TRACE notes
 We focus on the 3 Nation State TRACE attacks. Note that unlike THEIA, TRACE
 had execution partitioning using BEEP. This specifically shows up in the
@@ -177,19 +133,6 @@ in the same manner. (We initially believed these processes were all detached,
 but realized that they are connected by `exec` events between two processes,
 instead of the `clone` events we expected to see.)
 
-### 4.9: TRACE tcexec
-This is where the pine backdoor graph was supposed to be. This attack is
-somewhat complicated by the brute force attempts to make failed steps
-succeed. For example, one of the `tcexec` processes was simply run via an
-interactive terminal (it can be traced through `bash` to `xfce4-terminal`,
-indicating this was intentionally run). We include this `tcexec` process (but
-not its parent `bash` session), although it is less clear whether this is
-technically an attacker behavior or not.
-
-The second attempt of using `tcexec` manages to execute its port scanning
-behavior. This one was launched by `pine` as indicated by the ground truth. We
-record this as the `successful` attack, although it was only able to perform
-port scanning and not launch a shell.
 
 ## CADETS notes
 CADETS is a FreeBSD host and appears to have worse log capture than the Linux
@@ -226,36 +169,3 @@ final `test` process seems to have a lot more activity than previous attacks.
 ### 3.14: nginx Backdoor 4
 Same deal as before - once again, many of the referenced files (e.g.,
 `eWq10bVcx`, `memhelp.so`, `eraseme`, and `done.so` don't appear in the logs).
-
-## FiveDirections notes
-FiveDirections is the Windows host, but fortunately the CDM means the logs are
-formatted in the same way. The ground truth references FiveDirections in one
-of the TA5.2 sections (Section 3.5), but this seems to have been a
-documentation error.
-
-### 3.4: Firefox Backdoor
-The firefox process that becomes compromised is relatively short-lived, so we
-add the entire subgraph after the first connection to the shellcode server.
-Note that some of the referenced files (e.g., "locomotives.rtf",
-"Covert.xlsx") don't seem to appear in the logs.
-
-Note that the shellcode server in the ground truth (`156.78.147.114:80`)
-actually appears unreported again at around 04/11 11:57 and 04/12 10:08. Not
-sure if this is a logging error or not --- we chose to ignore this.
-
-### 3.10: Firefox Extension
-As usual, the webserver doesn't appear in the logs, so we use the shellcode
-server instead. Once again, this report doesn't seem to fully line up with the
-logs: there are actually 2 connections to the shellcode server, and the second
-one did successfully download the malware `hJauWl01` as reported. However,
-though this wasn't reported, the malware was actually successfully able to
-run, though it didn't do anything. We have a separate subgraph for the malware
-running in case it is useful.
-
-### 4.4: Malicious Excel Script
-As the ground truth indicates, the excel macro failed to run successfully, but
-the malicious PowerShell script was then run manually instead. They also note
-that they were able to run a command shell and access a bunch of files. We
-found the shell (`cmd.exe`, not `powershell.exe`), but not the link between
-the `cmd` session and the `powershell` script. We isolated both as separate
-subgraphs.
