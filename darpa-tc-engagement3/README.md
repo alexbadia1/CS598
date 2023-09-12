@@ -24,6 +24,24 @@ To provide some intuition as to what is happening in the attacks, we provide vis
 
 ![theia_3.3_success_gatech_profile](imgs/theia_3.3_success_gatech_profile.png)
 
+### 3.4 2018-04-11 1000 FiveDirections – Firefox Backdoor w/ Drakon In-Memory
+
+*SUCCESS: Firefox exploit via www.cnpc.com.cn ad*
+
+![fivedirections_3.4_success](imgs/fivedirections_3.4_success.png)
+
+### 3.10 2018-04-12 1100 FiveDirections – Browser Extension w/ Drakon Dropper
+
+The continued attack on FiveDirections did not go well for the red team. They were unable to load dragon into memory on their first attempt, and then later failed to execute it successfully even when it was written to disk. We're going to cause stage one of the attack (`pass_mgr.exe`) a success because the attacker left a meaningful footprint on the machine. The second stage of the attack (`hJauWl01`) does not leave a meaningful footprint so we designate it as a failure.
+
+*SUCCESS: Execute malicious password manager and connect to shellcode server, fail to load drakon dropper to memory, write drakon to disk as hJauWl01.*
+
+![fivedirections_3.10_success_pass_mgr](imgs/fivedirections_3.10_success_pass_mgr.png)
+
+*FAIL: Attempt to execute drakon from disk*
+
+![fivedirections_3.10_fail_hJauWl01](imgs/fivedirections_3.10_fail_hJauWl01.png)
+
 ### 3.11 2018-04-12 THEIA – Browser Extension w/ Drakon Dropper
 
 *FAIL: Memory injection attempt to SSHD did not work*
