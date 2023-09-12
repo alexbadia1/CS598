@@ -12,9 +12,17 @@ from graph_helpers import *
 if __name__ == "__main__":
 
     igraph_file = sys.argv[1]
-    seed_file = igraph_file.replace(".pkl.xz", ".csv")
-    pdf_file = igraph_file.replace(".pkl.xz", ".pdf")
+
+    base_fname = igraph_file
+    if igraph_file.endswith("pkl.xz"):
+        base_fname = igraph_file.replace(".pkl.xz", "")
+    else:
+        base_fname= igraph_file.replace(".pickle", "")
+
     
+    seed_file = base_fname + ".csv"
+    pdf_file = base_fname + ".pdf"
+
     g = pickle_read(igraph_file)
 
     print("Relabeling nodes and edges...")
@@ -27,10 +35,12 @@ if __name__ == "__main__":
     prune_edges(g)
     print("Merging Vertices...")
     merge_vertices(g)
-    lamport_timestamps(g)
+    print("Re-pruning Edges...")
+    prune_edges(g)
+    #lamport_timestamps(g)
     #mark_uuids(g)
 
-    print("Plotting %s..." %(pdf_file))
+    print("Plotting %s of size V=%d, E=%d..." %(pdf_file, len(g.vs), len(g.es)))
     layout = g.layout_davidson_harel()
     g.vs["label"] = [g.vs[i]["name"] for i in range(0,len(g.vs))]
     g.vs["shape"] = ["rectangle" for t in g.vs["name"]]
