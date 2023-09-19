@@ -12,7 +12,7 @@ We have provided the attack procedures from the original ATLAS dataset in the at
 
 In Step 2, S1 and S2 use a Word vulnerability while S3 and S4 use a flash vulnerability instead. This means that, for each attack, three other attacks are highly similar (4 of 5 steps are the same) and one attack is nearly identical (same attack vector in step 2):
 
-![atlas_diversity_s1-s4](imgs/atlas_diversity_s1-s4.png)
+![atlas_diversity_s1-4](imgs/atlas_diversity_s1-4.png)
 
 Attacks M1-M6 are continuations of S1-S4 that spread to a second machine. Here are the new steps introduced to the singlehost procedure:
 
