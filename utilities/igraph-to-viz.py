@@ -25,28 +25,35 @@ if __name__ == "__main__":
 
     g = pickle_read(igraph_file)
 
+    lamport_timestamps(g)
+
     print("Relabeling nodes and edges...")
     relabels(g)
+    print("Recovering vertex times...")
+    vertex_times(g)
+    
     print("Coloring graph...")
     color_graph(g, seed_file)
-    print("Decloning processes...")
-    declone_processes(g)
+
+    #print("Decloning processes...")
+    #declone_processes(g)
     print("Pruning Edges...")
     prune_edges(g)
     print("Merging Vertices...")
     merge_vertices(g)
     print("Re-pruning Edges...")
-    prune_edges(g)
-    #lamport_timestamps(g)
+    prune_edges(g)    
+
     #mark_uuids(g)
 
+    attack_only(g)
+    
     print("Plotting %s of size V=%d, E=%d..." %(pdf_file, len(g.vs), len(g.es)))
     layout = g.layout_davidson_harel()
     g.vs["label"] = [g.vs[i]["name"] for i in range(0,len(g.vs))]
     g.vs["shape"] = ["rectangle" for t in g.vs["name"]]
     g.vs["height"] = [25 for n in g.vs["name"]]
     g.vs["width"] = [20 + 10*(len(n)-1) for n in g.vs["name"]]
-    g.es["label"] = [t for t in g.es["type"]]
+    g.es["label"] = [t for t in g.es["time"]]
     g.es["arrow_size"] = [1.25 for t in g.es["type"]]
     igraph.plot(g, pdf_file, layout=layout, bbox=(2560, 1080), margin=200)
-

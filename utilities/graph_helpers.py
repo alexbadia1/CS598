@@ -7,7 +7,7 @@ import pickle
 import pdb
 import lzma
 
-def forward_trace(g, vertex_id, timestamp, visited):
+def forward_trace(g, vertex_id, depth, timestamp, visited, max_time = False, impacts_only = False):
 
     ancestor = g.vs[vertex_id]
     descendents = []
@@ -16,17 +16,25 @@ def forward_trace(g, vertex_id, timestamp, visited):
         return descendents
     else:
         visited.append(vertex_id)
-    
+        
+    terminal_node = True
     for e in g.es.select(_source = ancestor):
         if e.target in visited:
             continue
         else:
-            if int(e["time"]) >= timestamp:
-                descendents.append(e.target)
-                descendents = descendents + forward_trace(g, e.target, int(e["time"]), visited)
+            if (not timestamp
+                or (e["time"] >= timestamp and
+                    (not max_time or e["time"] <= max_time))):
+                terminal_node = False
+                #print_edge(g,e.index,"\t" * depth)
+                descendents = descendents + forward_trace(g, e.target, depth + 1, int(e["time"]), visited, max_time, impacts_only)
+
+    if not impacts_only or (impacts_only and terminal_node):
+        descendents.append(vertex_id)
+
     return descendents
 
-def backward_trace(g, vertex_id, timestamp, visited):
+def backward_trace(g, vertex_id, depth, timestamp, visited, min_time = False, root_causes_only = False):
 
     descendent = g.vs[vertex_id]
     ancestors = []
@@ -35,27 +43,35 @@ def backward_trace(g, vertex_id, timestamp, visited):
         return ancestors
     else:
         visited.append(vertex_id)
-    
+
+    terminal_node = True
     for e in g.es.select(_target = descendent):
-        if e.target in visited:
+        if e.source in visited:
             continue
         else:
-            if int(g.vs[e.target]["time"]) <= timestamp:
-                ancestors.append(e.target)
-                ancestors = ancestors + forward_trace(g, e.source, int(e["time"]), visited)
+            if (not timestamp
+                or (e["time"] <= timestamp and
+                    (not min_time or e["time"] >= min_time))):
+                terminal_node = False
+                #print_edge(g,e.index,"\t" * depth)
+                ancestors = ancestors + backward_trace(g, e.source, depth + 1,int(e["time"]), visited, min_time, root_causes_only)
+
+    if not root_causes_only or (root_causes_only and terminal_node):
+        ancestors.append(vertex_id)
+    
     return ancestors
 
 def print_node(g, vertex_id):
     v = g.vs[vertex_id]
-    print("[v%d](%s)" % (v.index, v["name"]))
+    print("[v%d](%s, %d)" % (v.index, v["name"], v["uuid"]))
 
-def print_edge(g, edge_id):
+def print_edge(g, edge_id,prefix):
 
     e = g.es[edge_id]
     s = g.vs[e.source]
     t = g.vs[e.target]
     
-    print("[v%d](%s) --[e%d](%s){%d}--> [v%d](%s)" % (
+    print("%s[v%d](%s) --[e%d](%s){%d}--> [v%d](%s)" % (prefix,
         s.index, s["name"], e.index, e["type"],int(e["time"]),
         t.index, t["name"]))
     
@@ -80,9 +96,15 @@ def pickle_write(data, path):
 # Any dataset-specific relabels go here
 def relabels(g):
 
-    winfile_prefix_filters = ["c:\\users\\aalsahee\\appdata\\local\\microsoft\\windows",
-                              "c:\\users\\aalsahee\\appdata\\local\\",
-                              "c:\\users\\aalsahee\\appdata\\roaming\\microsoft\\windows",                   
+    winfile_prefix_filters = ["c:\\users\\aalsahee\\appdata\\local",
+                              "c:\\users\\aalsahee\\appdata\\locallow",
+                              "c:\\users\\aalsahee\\appdata\\roaming",
+                              "c:\\users\\aalsahee\\desktop",
+                              "c:\\windows",
+                              "c:\\program files",
+                              "c:\\programdata",
+                              "c:\\",
+                              # Five Directions
                               "C:\\Users\\admin\\AppData\\Local",
                               "C:\\Users\\admin\\AppData\\Roaming",
                               "C:\\Users\\admin\\AppData",
@@ -93,9 +115,33 @@ def relabels(g):
                               "C:\\Program Files",
                               "C:\\"]
     
-    winfile_suffix_filters = ["\\a6gl280b.default\\",
+    winfile_suffix_filters = ["\\microsoft\\event viewer\\",
+                              "\\microsoft\\rac\\",
+                              "\\microsoft\\search\\",
+                              "\\microsoft\\windows defender\\",
+                              "\\common files\\",
+                              "\\internet explorer\\",
+                              "\\microsoft office\\"
+                              "\\vmware\\",
+                              "\\a6gl280b.default\\",
+                              "\\windows defender\\",
+                              "\\windows media player\\",
+                              "\\wireshark\\",
+                              "\\microsoft\\cryptneturlcache\\",
+                              "\\mozilla\\temp-",
+                              "\\microsoft\\windows\\",
+                              "\\assembly\\",
+                              "\\temp\\",
+                              "\\inf\\wmiaprpl\\",
+                              "\\microsoft.net",
+                              "\\registration\\",
+                              "\\softwaredistribution\\",
+                              "\\system32\\",
+                              "\\winsxs\\",
+                              "\\confer\\",
+                              # Five Directions
                               "\\lrjbrdp5.default\\",
-                              "\\mozilla firefox\\"
+                              "\\mozilla firefox\\",
                               "\\customdestinations\\",
                               "\\temporary internet files\\",
                               "\\\wdi\\",
@@ -115,32 +161,38 @@ def relabels(g):
             #name = g.vs[i]["name"].lstrip('\x00')
             g.vs[i].update_attributes({"name":""})
 
-        # Split unix file paths, keep file name        
-        if '/' in g.vs[i]["name"]:
-            name = g.vs[i]["name"].split('/')
-            name = name[len(name)-1]
-            g.vs[i].update_attributes({"name":name})
-
         # Gave up on cleaning up regkeys, just rename to "regkey"
         if g.vs[i]["type"] in ["regkey"]:
             g.vs[i].update_attributes({"name":"regkeys"})
-                    
-        # Split windows file paths, keep file name
-        if '\\' in g.vs[i]["name"]:
-            modified = False
-            name = g.vs[i]["name"]
-            for prefix in winfile_prefix_filters:
-                if prefix in name:
-                    name = name.split(prefix)
-                    name = name[len(name)-1]
-                    
-            for suffix in winfile_suffix_filters:
-                if suffix in name:                
-                    name = name[:name.index(suffix) + len(suffix)]
             
-            if not modified and False:
+        # Split unix file paths, keep file name        
+        if g.vs[i]["type"] == "file" and '/' in g.vs[i]["name"]:
+            name = g.vs[i]["name"].split('/')
+            name = name[len(name)-1]
+            g.vs[i].update_attributes({"name":name})
+        # Split windows file paths, keep file name
+        elif g.vs[i]["type"] == "file" and '\\' in g.vs[i]["name"]:
+
+            if g.vs[i]["name"].endswith(".exe"):
                 name = name.split('\\')
                 name = name[len(name)-1]
+            else:                
+                modified = False
+                name = g.vs[i]["name"]
+                for prefix in winfile_prefix_filters:
+                    if prefix in name:
+                        name = name.split(prefix)
+                        name = name[len(name)-1]
+                        
+                for suffix in winfile_suffix_filters:
+                    if suffix in name:                
+                        name = name[:name.index(suffix) + len(suffix)]
+                        modified = True
+            
+                if not modified:
+                    name = name.split('\\')
+                    name = name[len(name)-1]
+                    
             g.vs[i].update_attributes({"name":name})
             
     for i in range(0, len(g.es)):
@@ -160,49 +212,75 @@ def color_graph(g, seed_file):
 
     seed_labels={}
     if os.path.isfile(seed_file):
+
+        # Read seed labels in from csv
         try:
             with open(seed_file,'r') as csvfile:
-                rdr = csv.reader(csvfile)
+                rdr = csv.reader(csvfile, quotechar="\"")
                 for row in rdr:
                     seed_labels[row[3]] = row[4]
         except Exception as e:
             print("Error: %s" % (e))
             pdb.set_trace()
-            
+
         g.vs["color"] = g.vs["type"]
         color_dict = {"root_cause": "red", "impact": "green",
                       "contaminated": "grey", "benign" : "grey",
-                      "descendent": "yellow", "attack": "yellow"}
+                      "descendent": "yellow", "attack": "yellow",
+                      "default": "grey"}
+
+        # Generate lists of root causes and impacts
+        root_min = False
+        impact_max = False
         root_vertex_ids = []
         impact_vertex_ids = []
-        for i in range(0,len(g.vs["color"])):
+        for v in g.vs:
+            i = v.index
             v_uuid = str(g.vs[i]["uuid"])
-            try:
-                g.vs[i]["color"] = color_dict[seed_labels[v_uuid]]
-            except Exception as e:
-                print("Error: %s" % (e))
-                pdb.set_trace()
-                
-            if seed_labels[v_uuid] == "root_cause":
+            if seed_labels[v_uuid] == "root_cause":                
                 root_vertex_ids.append(g.vs[i].index)
+                if not root_min or root_min > g.vs[i]["min_time"]:
+                    root_min = g.vs[i]["min_time"]
+                
             elif seed_labels[v_uuid] == "impact":
                 impact_vertex_ids.append(g.vs[i].index)
+                if not impact_max or impact_max < g.vs[i]["max_time"]:
+                    impact_max = g.vs[i]["max_time"]
+            # Initial color
+            g.vs["color"] = color_dict["default"]
 
+        
         # Propagate root cause taint in graph colors
         descendents = []
+        print("Forward traces")
         for r in root_vertex_ids:
-            descendents = descendents + forward_trace(g, r, int(g.vs[r]["time"]),  [])
+            print_node(g, r)
+            descendents = descendents + forward_trace(g, r, depth=0, timestamp=False, max_time=impact_max, visited=[])
+
+        print("Backward traces")
         ancestors = []
         for i in impact_vertex_ids:
-            ancestors = ancestors + backward_trace(g, i, int(g.vs[i]["time"]), [])
+            print_node(g, i)
+            ancestors = ancestors + backward_trace(g, i, depth=0, timestamp=False, min_time=root_min, visited=[])
 
-        attack_chain = [vertex for vertex in descendents if vertex in ancestors]
-        attack_chain = descendents
+
+        attack_chain = [vertex for vertex in ancestors if vertex in descendents]
+            
+        # Color attack chain and mark attack_label attribute as True
         for d in attack_chain:
-            if seed_labels[g.vs[d]["uuid"]] in ["root_cause", "impact"]:
-                continue
-            elif g.vs[d]["type"] != "unknown":
-                g.vs[d]["color"] = color_dict["descendent"]
+            vi = d
+            v_uuid = str(g.vs[vi]["uuid"])
+            g.vs[vi]["attack_label"] = True            
+            if seed_labels[v_uuid] in ["root_cause", "impact"]:
+                g.vs[vi]["color"] = color_dict[seed_labels[v_uuid]]
+            elif g.vs[vi]["type"] != "unknown":
+                g.vs[vi]["color"] = color_dict["descendent"]
+            else:
+                print("unknown in attack chain")
+                print_node(g, vi)
+                pdb.set_trace()
+                        
+    # If there isn't a seed label csv, default to color vertex types
     else:
         color_dict = {"process": "blue", "file": "green", "regkey": "green", "socket": "yellow", "unknown": "grey", "alert": "red"}
         g.vs["color"] = [color_dict[t] for t in g.vs["type"]]
@@ -343,7 +421,8 @@ def merge_vertices(g, debug=False):
                 v2 = g.vs[neighbors[n2]]
 
                 # Skip if second neighbor is already marked for deletion
-                if v2.index in prune_set_v:
+                # Or if v2 is part of the attack
+                if v2.index in prune_set_v or v2["attack_label"]:
                     continue
                 
                 # Merge candidate if both are unknown
@@ -352,7 +431,8 @@ def merge_vertices(g, debug=False):
                     or (v1["type"] in ["file", "socket", "regkey"]
                         and v2["type"] in ["file", "socket", "regkey"]
                         and v1["name"] == v2["name"])
-                    or (v1["name"] == "" and v2["name"] == "")):
+                    or (v1["name"] == "" and v2["name"] == "" and
+                        "process" not in  [v1["type"], v2["type"]]) ):
                     
                     node_to_keep = v1
                     node_to_prune = v2
@@ -381,10 +461,11 @@ def merge_vertices(g, debug=False):
 def lamport_timestamps(g):
 
     timestamps = []
-    for e in g.es:
+    for e in g.es:        
         timestamps.append(e["time"])
     for v in g.vs:
-        timestamps.append(v["time"])
+        if "time" in v.attributes():
+            timestamps.append(v["time"])
 
     timestamps.sort()
         
@@ -392,6 +473,47 @@ def lamport_timestamps(g):
         e["time"] = timestamps.index(e["time"])
 
     for v in g.vs:
-        v["time"] = timestamps.index(v["time"])
-    
-    
+        if "time" in v.attributes():
+            v["time"] = timestamps.index(v["time"])
+
+# Find the minimum and maximum access times per vertex.
+# used to scope graph traversals.
+def vertex_times(g):
+
+    g.vs["min_time"] = [0 for n in g.vs["name"]]
+    g.vs["max_time"] = g.vs["min_time"]
+
+    for v in g.vs:
+
+        min_time = False
+        max_time = False
+        for e in g.es.select(_source = v.index):
+            if not min_time or e["time"] < min_time:
+                min_time = e["time"]
+            if not max_time or e["time"] > max_time:
+                max_time = e["time"]
+
+        for e in g.es.select(_target = v.index):
+            if not min_time or e["time"] < min_time:
+                min_time = e["time"]
+            if not max_time or e["time"] > max_time:
+                max_time = e["time"]
+        
+        v["min_time"] = min_time
+        v["max_time"] = max_time
+        
+            
+def attack_only(g):
+
+    prune_set_v = []
+    for v1 in g.vs:
+        if not v1["attack_label"]:
+            prune_set_v.append(v1.index)
+
+    g.delete_vertices(prune_set_v)
+
+    '''
+    for v1 in g.vs:
+        #print_node(g, v1.index)
+        #print("\t%d" % (v1["attack_label"]))
+'''

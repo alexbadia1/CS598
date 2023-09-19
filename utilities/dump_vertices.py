@@ -19,14 +19,18 @@ if False:
     relabels(g)
     print("Coloring graph...")
     color_graph(g, seed_file)
-    print("Decloning processes...")
-    declone_processes(g)
+    #print("Decloning processes...")
+    #declone_processes(g)
     print("Pruning Edges...")
     prune_edges(g)
     print("Merging Vertices...")
     merge_vertices(g)
     print("Re-pruning Edges...")
     prune_edges(g)
+    #lamport_timestamps(g)
+    #mark_uuids(g)
+
+    attack_only(g)
     
 vertices = []
 for i in range(0,len(g.vs)):
@@ -43,7 +47,7 @@ for i in range(0,len(g.vs)):
         if "is_attack" in v.attributes() and v["is_attack"]:
             default_label = "attack"            
 
-        vertices.append("%d,%s,%s,%s,%s" % (time, v["type"],v["name"],v["uuid"],default_label))
+        vertices.append("%d,%s,\"%s\",%s,%s" % (time, v["type"],v["name"],v["uuid"],default_label))
 
     except Exception as e:
         print("Error: %s" % (e))
