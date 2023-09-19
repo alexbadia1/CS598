@@ -87,3 +87,8 @@ To provide some intuition as to what is happening in the attacks, we provide vis
 *Host 1*
 
 ![H1-S4](imgs/h1-s4.png)
+
+## Notes
+
+- Host 1's IP address in the Host 2 logs appears as 10.193.242.113.
+- The attacker's IP address in either log appears as 10.193.66.115.
