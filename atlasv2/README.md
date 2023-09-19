@@ -22,6 +22,12 @@ Like the singlehost attacks, the multihost attacks only meaningfully vary in ste
 
 ![atlas_diversity_m1-6](imgs/atlas_diversity_m1-6.png)
 
+Used correctly, it is appropriate (and perhaps even desirable!) to test on subtle variations of the same attack chain. 
+However, please be wary about the potential to misinterpret models trained on this attack data.
+The original ATLAS paper used these attacks to demonstrate the ability to recognize patterns from previously viewed attacks,
+  making their interpretation of the results valid.
+If the same leave-one-attack-out procedure was used to evaluate a generic intrustion detection model, 
+  reporting the results without sufficient context would be disengenuous.
 
 ## Visualizations
 
