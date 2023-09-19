@@ -22,6 +22,8 @@ To provide some intuition as to what is happening in the attacks, we provide vis
 
 *Host 2*
 
+Note that many remote hosts (the IP addresses shaded in yellow) are wrongfully implicated in this attack.  This is a result of the background activities conducted by a second experimenter during the attack engagement. It does not effect the processes identified in the attack chain.
+
 ![H2-M2](imgs/h2-m2.png)
 
 ### Multihost Attack M3
@@ -31,6 +33,8 @@ To provide some intuition as to what is happening in the attacks, we provide vis
 ![H1-M3](imgs/h1-m3.png)
 
 *Host 2*
+
+Note that two remote hosts (the IP addresses shaded in yellow) are wrongfully implicated in this attack.  This is a result of the background activities conducted by a second experimenter during the attack engagement. It does not effect the processes identified in the attack chain.
 
 ![H2-M3](imgs/h2-m3.png)
 
@@ -42,6 +46,8 @@ To provide some intuition as to what is happening in the attacks, we provide vis
 
 *Host 2*
 
+Note that one remote host (the IP address shaded in yellow) is wrongfully implicated in this attack.  This is a result of the background activities conducted by a second experimenter during the attack engagement. It does not effect the processes identified in the attack chain.
+
 ![H2-M4](imgs/h2-m4.png)
 
 ### Multihost Attack M5
@@ -52,6 +58,8 @@ To provide some intuition as to what is happening in the attacks, we provide vis
 
 *Host 2*
 
+Note that one remote host (the IP address shaded in yellow) is wrongfully implicated in this attack.  This is a result of the background activities conducted by a second experimenter during the attack engagement. It does not effect the processes identified in the attack chain.
+
 ![H2-M5](imgs/h2-m5.png)
 
 ### Multihost Attack M6
@@ -61,6 +69,8 @@ To provide some intuition as to what is happening in the attacks, we provide vis
 ![H1-M6](imgs/h1-m6.png)
 
 *Host 2*
+
+Note that five remote hosts (the IP addresses shaded in yellow) are wrongfully implicated in this attack.  This is a result of the background activities conducted by a second experimenter during the attack engagement. It does not effect the processes identified in the attack chain.
 
 ![H2-M6](imgs/h2-m6.png)
 
