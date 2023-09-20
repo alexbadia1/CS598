@@ -13,7 +13,6 @@ seed_file = base_fname + ".csv"
 
 g = pickle_read(igraph_file)
 
-
 if False:
     print("Relabeling nodes and edges...")
     relabels(g)
@@ -21,8 +20,9 @@ if False:
     vertex_times(g)
     print("Coloring graph...")
     color_graph(g, seed_file)
-    #print("Decloning processes...")
-    #declone_processes(g)
+    attack_only(g)    
+    print("Decloning processes...")
+    declone_processes(g)
     print("Pruning Edges...")
     prune_edges(g)
     print("Merging Vertices...")
@@ -32,30 +32,13 @@ if False:
     #lamport_timestamps(g)
     #mark_uuids(g)
 
-    attack_only(g)
-    
-vertices = []
-for i in range(0,len(g.vs)):
-    v = g.vs[i]
+time_dict = {}
+for e in g.es:
+    time_dict[e.index] = e["time"]
 
-    try:
 
-        time = 0
-        if "time" in v.attributes():
-            time = v["time"]
-        
-        default_label = "benign"
+sorted_keys = sorted(time_dict, key=time_dict.get)
 
-        #if "is_attack" in v.attributes() and v["is_attack"]:
-        #    default_label = "attack"            
+for k in sorted_keys:
+    print_edge(g, k, "")
 
-        vertices.append("%d,%s,\"%s\",%s,%s" % (time, v["type"],v["name"],v["uuid"],default_label))
-
-    except Exception as e:
-        print("Error: %s" % (e))
-        pdb.set_trace()
-        
-for vertex in vertices:
-    print(vertex)
-
-    

@@ -7,8 +7,12 @@ import pickle
 import pdb
 import lzma
 
-def forward_trace(g, vertex_id, depth, timestamp, visited, max_time = False, impacts_only = False):
+# Bates: Need to fuzz the timestamps for the forward and backtraces to work
+# on windows.
+FUZZY_TRACE_TIME = 100
 
+def forward_trace(g, vertex_id, depth, timestamp, visited, max_time = False, impacts_only = False):
+    
     ancestor = g.vs[vertex_id]
     descendents = []
 
@@ -23,10 +27,11 @@ def forward_trace(g, vertex_id, depth, timestamp, visited, max_time = False, imp
             continue
         else:
             if (not timestamp
-                or (e["time"] >= timestamp and
+                or ( (e["time"]+FUZZY_TRACE_TIME) >= timestamp and
                     (not max_time or e["time"] <= max_time))):
                 terminal_node = False
                 #print_edge(g,e.index,"\t" * depth)
+                g.es[e.index]["attack_label"] = True
                 descendents = descendents + forward_trace(g, e.target, depth + 1, int(e["time"]), visited, max_time, impacts_only)
 
     if not impacts_only or (impacts_only and terminal_node):
@@ -50,10 +55,11 @@ def backward_trace(g, vertex_id, depth, timestamp, visited, min_time = False, ro
             continue
         else:
             if (not timestamp
-                or (e["time"] <= timestamp and
+                or ( (e["time"]-FUZZY_TRACE_TIME) <= timestamp and
                     (not min_time or e["time"] >= min_time))):
                 terminal_node = False
                 #print_edge(g,e.index,"\t" * depth)
+                g.es[e.index]["attack_label"] = True
                 ancestors = ancestors + backward_trace(g, e.source, depth + 1,int(e["time"]), visited, min_time, root_causes_only)
 
     if not root_causes_only or (root_causes_only and terminal_node):
@@ -61,11 +67,11 @@ def backward_trace(g, vertex_id, depth, timestamp, visited, min_time = False, ro
     
     return ancestors
 
-def print_node(g, vertex_id):
+def print_node(g, vertex_id, prefix=""):
     v = g.vs[vertex_id]
-    print("[v%d](%s, %d)" % (v.index, v["name"], v["uuid"]))
+    print("%s[v%d](%s, %d)" % (prefix, v.index, v["name"], v["uuid"]))
 
-def print_edge(g, edge_id,prefix):
+def print_edge(g, edge_id, prefix):
 
     e = g.es[edge_id]
     s = g.vs[e.source]
@@ -151,68 +157,92 @@ def relabels(g):
 
     
     for i in range(0,len(g.vs)):
-        if " (deleted)" in g.vs[i]["name"]:
-            g.vs[i]["name"] = g.vs[i]["name"].replace(" (deleted)","")
+        name = g.vs[i]["name"]
+        node_type = g.vs[i]["type"]
 
-        if g.vs[i]["name"].startswith("sock="):
-            g.vs[i]["name"] = g.vs[i]["name"].split("=")[1]
+        #######################################
+        #      DARPA E3 Hacks
+        #######################################
+        # Remove "deleted" from red team executable names
+        if " (deleted)" in name:
+            g.vs[i]["name"] = name.replace(" (deleted)","")
 
-        if '\x00' in g.vs[i]["name"]: 
-            #name = g.vs[i]["name"].lstrip('\x00')
+        # Remove sock= prefix from sockets
+        if name.startswith("sock="):
+            g.vs[i]["name"] = name.split("=")[1]
+
+        # Remove null prefix from unknown node labels,
+        #  replace with empty string
+        if '\x00' in name: 
             g.vs[i].update_attributes({"name":""})
 
-        # Gave up on cleaning up regkeys, just rename to "regkey"
-        if g.vs[i]["type"] in ["regkey"]:
-            g.vs[i].update_attributes({"name":"regkeys"})
-            
-        # Split unix file paths, keep file name        
-        if g.vs[i]["type"] == "file" and '/' in g.vs[i]["name"]:
-            name = g.vs[i]["name"].split('/')
+        #######################################
+        #      Unixy Hacks
+        #######################################            
+        # Split unix file paths, keep file name
+        if node_type == "file" and '/' in name:
+            name = name.split('/')
             name = name[len(name)-1]
-            g.vs[i].update_attributes({"name":name})
-        # Split windows file paths, keep file name
-        elif g.vs[i]["type"] == "file" and '\\' in g.vs[i]["name"]:
-
-            if g.vs[i]["name"].endswith(".exe"):
-                name = name.split('\\')
-                name = name[len(name)-1]
-            else:                
-                modified = False
-                name = g.vs[i]["name"]
-                for prefix in winfile_prefix_filters:
-                    if prefix in name:
-                        name = name.split(prefix)
-                        name = name[len(name)-1]
-                        
-                for suffix in winfile_suffix_filters:
-                    if suffix in name:                
-                        name = name[:name.index(suffix) + len(suffix)]
-                        modified = True
+            g.vs[i]["name"] = name
             
-                if not modified:
-                    name = name.split('\\')
+        #######################################
+        #      Windowsy Hacks
+        #######################################
+        # Gave up on cleaning up regkeys, just rename to "regkey"
+        if node_type in ["regkey"]:
+            g.vs[i]["name"] = "regkeys"
+
+        # If executable, always just go with exe name
+        #  whether its a file or a process
+        if name.endswith(".exe"):
+            name = name.split('\\')
+            name = name[len(name)-1]
+            g.vs[i]["name"] = name
+
+        # Filter windows file paths to make them semi-salient
+        #  and semi-collapsable, pure trial and error on these filters
+        if node_type == "file" and '\\' in name:
+            modified = False
+
+            for prefix in winfile_prefix_filters:
+                if prefix in name:
+                    name = name.split(prefix)
                     name = name[len(name)-1]
                     
-            g.vs[i].update_attributes({"name":name})
+            for suffix in winfile_suffix_filters:
+                if suffix in name:                
+                    name = name[:name.index(suffix) + len(suffix)]
+                    modified = True
             
-    for i in range(0, len(g.es)):
-        if g.es[i]["type"].startswith("EVENT_"):
-            g.es[i]["type"] = g.es[i]["type"].split("_")[1]
-            g.es[i]["type"] = g.es[i]["type"].lower()
+            if not modified:
+                name = name.split('\\')
+                name = name[len(name)-1]
 
+            g.vs[i]["name"] = name
+
+
+    #######################################
+    #      Edge relabels
+    #######################################
+    # Some syscalls in my input files started with "EVENT_", dropping that
+    for j in range(0, len(g.es)):
+        edge_type = g.es[j]["type"]
+        if edge_type.startswith("EVENT_"):
+            edge_type = edge_type.split("_")[1]
+            g.es[j]["type"] = edge_type.lower()                
+            
+            
 # Modify processes to denote UUIDs
 #  (must be done later in processing than relabels())            
 def mark_uuids(g):
     for i in range(0,len(g.vs)):
         if g.vs[i]["type"] == "process":
             g.vs[i]["name"] = g.vs[i]["name"]+":"+str(g.vs[i]["uuid"])[:4]
-            
-# Color the graph
-def color_graph(g, seed_file):
+
+def get_seed_labels(seed_file):
 
     seed_labels={}
     if os.path.isfile(seed_file):
-
         # Read seed labels in from csv
         try:
             with open(seed_file,'r') as csvfile:
@@ -223,6 +253,42 @@ def color_graph(g, seed_file):
             print("Error: %s" % (e))
             pdb.set_trace()
 
+    return seed_labels
+
+def contaminate_graph(g, seed_file):
+
+        seed_labels = get_seed_labels(seed_file)
+
+        # Generate lists of root causes 
+        root_vertex_ids = []
+        for v in g.vs:
+            i = v.index
+            v_uuid = str(g.vs[i]["uuid"])
+            if seed_labels[v_uuid] == "root_cause":                
+                root_vertex_ids.append(g.vs[i].index)
+                
+        # Identify all descendents of root cause (incl.)
+        descendents = []
+        for r in root_vertex_ids:
+            descendents = descendents + forward_trace(g, r, depth=0, timestamp=False, visited=[])
+
+        # Mark descendents of contaminate sources as contaminated
+        g.vs["contaminate_label"] = [False for n in g.vs["name"]]
+        for d in descendents:
+            g.vs[d]["contaminate_label"] = True            
+    
+# Color the graph
+def color_graph(g, seed_file):
+
+    seed_labels={}
+    if os.path.isfile(seed_file):
+
+        
+        seed_labels = get_seed_labels(seed_file)
+
+        g.vs["attack_label"] = [False for n in g.vs["type"]]
+        g.es["attack_label"] = [False for n in g.es["type"]]
+        
         g.vs["color"] = g.vs["type"]
         color_dict = {"root_cause": "red", "impact": "green",
                       "contaminated": "grey", "benign" : "grey",
@@ -249,23 +315,26 @@ def color_graph(g, seed_file):
             # Initial color
             g.vs["color"] = color_dict["default"]
 
-        
         # Propagate root cause taint in graph colors
         descendents = []
-        print("Forward traces")
+        #print("Root Causes:")
         for r in root_vertex_ids:
-            print_node(g, r)
-            descendents = descendents + forward_trace(g, r, depth=0, timestamp=False, max_time=impact_max, visited=[])
+            #print_node(g,r,"")
+            descendents = descendents + forward_trace(g, r, depth=1, timestamp=False, max_time=impact_max, visited=[])
 
-        print("Backward traces")
+
+        #print("Impacts:")
         ancestors = []
         for i in impact_vertex_ids:
-            print_node(g, i)
-            ancestors = ancestors + backward_trace(g, i, depth=0, timestamp=False, min_time=root_min, visited=[])
+            #print_node(g,i,"")
+            ancestors = ancestors + backward_trace(g, i, depth=1, timestamp=False, min_time=root_min, visited=[])
 
 
         attack_chain = [vertex for vertex in ancestors if vertex in descendents]
-            
+        #print("%d descendents and %d ancestors, %d attack chain" % (len(descendents),
+        #                                                            len(ancestors),
+        #                                                            len(attack_chain)))
+                                                                    
         # Color attack chain and mark attack_label attribute as True
         for d in attack_chain:
             vi = d
@@ -379,8 +448,8 @@ def _all_neighbors(g, vi):
     return neighbors
 
     
-# Remove dangling vertices (applied after prune vertices)
-def _prune_vertices(g, debug=False):
+# Remove dangling vertices 
+def prune_vertices(g, debug=False):
 
     prune_set_v = []
     for vi in range(0, len(g.vs)):
@@ -416,15 +485,15 @@ def merge_vertices(g, debug=False):
             # Skip if first neighbor is already marked for deletion
             if v1.index in prune_set_v:
                 continue
-            
+                    
             for n2 in range(n1+1, len(neighbors)-1):
                 v2 = g.vs[neighbors[n2]]
 
                 # Skip if second neighbor is already marked for deletion
                 # Or if v2 is part of the attack
-                if v2.index in prune_set_v or v2["attack_label"]:
+                if v2.index in prune_set_v:
                     continue
-                
+
                 # Merge candidate if both are unknown
                 # Merge candidate if both have same data entity name
                 if( (v1["type"] == "unknown" and v2["type"] == "unknown")
@@ -433,7 +502,7 @@ def merge_vertices(g, debug=False):
                         and v1["name"] == v2["name"])
                     or (v1["name"] == "" and v2["name"] == "" and
                         "process" not in  [v1["type"], v2["type"]]) ):
-                    
+
                     node_to_keep = v1
                     node_to_prune = v2
                     prune_set_v.append(v2.index)
@@ -476,6 +545,8 @@ def lamport_timestamps(g):
         if "time" in v.attributes():
             v["time"] = timestamps.index(v["time"])
 
+    
+            
 # Find the minimum and maximum access times per vertex.
 # used to scope graph traversals.
 def vertex_times(g):
@@ -512,8 +583,10 @@ def attack_only(g):
 
     g.delete_vertices(prune_set_v)
 
-    '''
-    for v1 in g.vs:
-        #print_node(g, v1.index)
-        #print("\t%d" % (v1["attack_label"]))
-'''
+    prune_set_e = []
+    for e1 in g.es:
+        if not e1["attack_label"]:
+            prune_set_e.append(e1.index)
+
+    g.delete_edges(prune_set_e)
+
