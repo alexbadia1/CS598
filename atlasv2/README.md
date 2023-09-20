@@ -133,3 +133,4 @@ Note that five remote hosts (the IP addresses shaded in yellow) are wrongfully i
 
 - Host 1's IP address in the Host 2 logs appears as 10.193.242.113.
 - The attacker's IP address in either log appears as 10.193.66.115.
+- The malicious "email attachments" (`msf.rtf`, `msf.doc`) were actually detonated from the Downloads folder during the attacks; there is no mail client activity in the attack chains.
