@@ -1,6 +1,6 @@
 # REAPr: Recovery Every Attack Process 
 
-## Ground Truth IDS Labels
+## Standardizing Ground Truth IDS Labels
 
 As intrusion detection systems have become more advanced, the potential for *researcher intent*
   to influence evaluation results has become a greater concern.
@@ -25,7 +25,7 @@ We also provide detailed documentation of our work,
 It is our hope that these efforts will improve the rigor and uniformity of experimental
   results in threat detection research.
 
-## Dataset Labeling Methodology.
+## Dataset Labeling Methodology
 
 Here, we describe the general process used to create these
 labels here; for more specific details, see the READMEs accompanying each
@@ -96,3 +96,14 @@ Please also mention in the experimental setup section the month and year of the 
   commit = {ENTER COMMIT DIGEST HERE}
 }
 ```
+
+## Contributing to REAPr
+
+If you have generated a threat detection dataset comprised (at least in part) of endpoint logs,
+  we would be happy to feature your labels in this repository.
+We ask that you follow our labeling methodology and then provide us with:
+  human-readable graph visualization(s) of the attack behaviors;
+  a CSV containing labels for all processes in the dataset, 
+  making sure that each process can be uniquely identified in the logs using the information in the CSV;
+  and instructions for how to access the dataset.
+Feel free to reach out if you need guidance on any of these points.
