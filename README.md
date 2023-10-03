@@ -1,8 +1,33 @@
-# REAPr Grount Truth IDS Labels: Recovery Every Attack Process
+# REAPr Ground Truth IDS Labels
 
-## Dataset Labeling Process
-This repository contains attack labels we have manually created for various
-system audit datasets. We describe the general process used to create these
+## Recovery Every Attack Process
+
+As intrusion detection systems have become more advanced, the potential for *researcher intent*
+  to influence evaluation results has become a greater concern.
+Many of today's popular intrusion detection datasets are inconsistent in how they provide
+  ground truth as to the attacks contained therein -- some provide label specific entities
+  and events as malicious, others may specify that the attack is contained in a specific log file,
+  while others may only release a qualitative description of the attack.
+Because of this inconsistency, individual experimenters are left to make their own decisions as to
+  which events/entities should be designated as malicious.
+The researcher is strongly motivated for the system under test to perform well in experiments,
+  creating the potential for biased decision making in ad hoc ground truth labeling.
+
+This repository contains standardized ground truth labeling for a intrusion detection datasets 
+  used in the security literature.
+We propose a generic and universally applicable labeling methodology for endpoint events --
+  *the ideal intrusion detection system should identify every attacker-controlled and -influenced process.*
+To facilitate this, we perform semi-automated labeling of popular datasets using provenance 
+  analysis techniques that have been appeared in the security literature.
+We also provide detailed documentation of our work, 
+  including visualizations of each and every attack,
+  so that researchers can understand and independently verify our work, should they choose.
+It is our hope that these efforts will improve the rigor and uniformity of experimental
+  results in threat detection research.
+
+## Dataset Labeling Methodology.
+
+Here, we describe the general process used to create these
 labels here; for more specific details, see the READMEs accompanying each
 dataset's labels.
 
