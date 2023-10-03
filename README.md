@@ -1,6 +1,6 @@
-# REAPr Ground Truth IDS Labels
+# REAPr: Recovery Every Attack Process 
 
-## Recovery Every Attack Process
+## Ground Truth IDS Labels
 
 As intrusion detection systems have become more advanced, the potential for *researcher intent*
   to influence evaluation results has become a greater concern.
@@ -76,3 +76,22 @@ We labeled datasets according to the following basic outline:
    We choose to evaluate on process entities only, as opposed to file or socket
    entities, etc., as only process entities are agentive. This is also more
    consistent with commercial endpoint detection products. 
+
+## Publishing using the REAPr Ground Truth Labels
+
+We encourage you to use these attack labels in your experiments. 
+If you do so, please specify that you are using these labels by name (REAPr) in your experimental setup section
+  and cite the BibTeX entry below.
+Please also mention in the experimental setup section the month and year of the commit you are working off of
+  just in case we identify an error and need to update the existing label sets.
+
+
+@misc{reapr-ground-truth,
+  author = {Jason Liu and Adil Inam and Akul Goyal and Kim Westfall and Andy Riddle and Adam Bates},
+  title = {REAPr: Recovery Every Attack Process},
+  year = {2023},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://bitbucket.org/sts-lab/reapr-ground-truth}},
+  commit = {ENTER COMMIT DIGEST HERE}
+}
