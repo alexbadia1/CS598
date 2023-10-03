@@ -1,4 +1,6 @@
-# Dataset Labeling Process
+# REAPr Grount Truth IDS Labels: Recovery Every Attack Process
+
+## Dataset Labeling Process
 This repository contains attack labels we have manually created for various
 system audit datasets. We describe the general process used to create these
 labels here; for more specific details, see the READMEs accompanying each
