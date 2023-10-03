@@ -85,7 +85,7 @@ If you do so, please specify that you are using these labels by name (REAPr) in 
 Please also mention in the experimental setup section the month and year of the commit you are working off of
   just in case we identify an error and need to update the existing label sets.
 
-
+```
 @misc{reapr-ground-truth,
   author = {Jason Liu and Adil Inam and Akul Goyal and Kim Westfall and Andy Riddle and Adam Bates},
   title = {REAPr: Recovery Every Attack Process},
@@ -95,3 +95,4 @@ Please also mention in the experimental setup section the month and year of the 
   howpublished = {\url{https://bitbucket.org/sts-lab/reapr-ground-truth}},
   commit = {ENTER COMMIT DIGEST HERE}
 }
+```
