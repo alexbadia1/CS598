@@ -24,8 +24,6 @@ if __name__ == "__main__":
     pdf_file = base_fname + ".pdf"
 
     g = pickle_read(igraph_file)
-
-
     
     print("Relabeling nodes and edges...")
     relabels(g)
@@ -45,7 +43,7 @@ if __name__ == "__main__":
     print("Pruning Vertices...")
     prune_vertices(g)        
     #mark_uuids(g)
-
+    #lamport_timestamps(g)
 
     
     print("Plotting %s of size V=%d, E=%d..." %(pdf_file, len(g.vs), len(g.es)))
