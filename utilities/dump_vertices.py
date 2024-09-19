@@ -14,11 +14,11 @@ seed_file = base_fname + ".csv"
 g = pickle_read(igraph_file)
 
 
+
 if False:
     print("Relabeling nodes and edges...")
     relabels(g)
-    print("Recovering vertex times...")
-    vertex_times(g)
+
     print("Coloring graph...")
     color_graph(g, seed_file)
     #print("Decloning processes...")
@@ -33,23 +33,21 @@ if False:
     #mark_uuids(g)
 
     attack_only(g)
-    
+
+vertex_times(g)
 vertices = []
 for i in range(0,len(g.vs)):
     v = g.vs[i]
 
     try:
 
-        time = 0
-        if "time" in v.attributes():
-            time = v["time"]
-        
+        time = int(v["min_time"])
+
         default_label = "benign"
 
-        #if "is_attack" in v.attributes() and v["is_attack"]:
-        #    default_label = "attack"            
-
-        vertices.append("%d,%s,\"%s\",%s,%s" % (time, v["type"],v["name"],v["uuid"],default_label))
+        pretty_name = v["name"].lstrip("\x00")
+        
+        vertices.append("%d,%s,\"%s\",%s,%s" % (time, v["type"], pretty_name, v["uuid"], default_label))
 
     except Exception as e:
         print("Error: %s" % (e))
