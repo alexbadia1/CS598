@@ -16,13 +16,15 @@ if __name__ == "__main__":
     base_fname = igraph_file
     if igraph_file.endswith("pkl.xz"):
         base_fname = igraph_file.replace(".pkl.xz", "")
+    elif igraph_file.endswith("pickle.xz"):
+        base_fname = igraph_file.replace(".pickle.xz", "")
     else:
         base_fname= igraph_file.replace(".pickle", "")
 
     
     seed_file = base_fname + ".csv"
     pdf_file = base_fname + ".pdf"
-
+    print(seed_file)
     g = pickle_read(igraph_file)
     
     print("Relabeling nodes and edges...")
