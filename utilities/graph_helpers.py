@@ -273,12 +273,13 @@ def color_graph(g, seed_file):
         for v in g.vs:
             i = v.index
             v_uuid = str(g.vs[i]["uuid"])
-            if seed_labels[v_uuid] == "root_cause":                
+
+            if v_uuid in seed_labels and seed_labels[v_uuid] == "root_cause":                
                 root_vertex_ids.append(g.vs[i].index)
                 if not root_min or root_min > g.vs[i]["min_time"]:
                     root_min = g.vs[i]["min_time"]
                 
-            elif seed_labels[v_uuid] == "impact":
+            elif v_uuid in seed_labels and seed_labels[v_uuid] == "impact":
                 impact_vertex_ids.append(g.vs[i].index)
                 if not impact_max or impact_max < g.vs[i]["max_time"]:
                     impact_max = g.vs[i]["max_time"]

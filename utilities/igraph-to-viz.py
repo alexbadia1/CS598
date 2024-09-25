@@ -49,6 +49,9 @@ if __name__ == "__main__":
 
     
     print("Plotting %s of size V=%d, E=%d..." %(pdf_file, len(g.vs), len(g.es)))
+    if len(g.vs) == 0:
+        print("\t...nevermind.")
+        sys.exit(-1)
     layout = g.layout_davidson_harel()
     g.vs["label"] = [g.vs[i]["name"] for i in range(0,len(g.vs))]
     g.vs["shape"] = ["rectangle" for t in g.vs["name"]]
