@@ -325,7 +325,7 @@ def color_graph(g, seed_file):
             vi = d
             v_uuid = str(g.vs[vi]["uuid"])
             g.vs[vi]["attack_label"] = True            
-            if seed_labels[v_uuid] in ["root_cause", "impact", "contaminated"]:
+            if  v_uuid in seed_labels and seed_labels[v_uuid] in ["root_cause", "impact", "contaminated"]:
                 g.vs[vi]["color"] = color_dict[seed_labels[v_uuid]]
             elif g.vs[vi]["type"] != "unknown":
                 g.vs[vi]["color"] = color_dict[g.vs[vi]["type"]]
