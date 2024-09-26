@@ -527,9 +527,9 @@ def merge_vertices(g, debug=False):
 
                 # Merge candidate if both are unknown
                 # Merge candidate if both have same data entity name
-                if( (v1["type"] == "unknown" and v2["type"] == "unknown")
-                    or (v1["type"] in ["file", "socket", "regkey"]
-                        and v2["type"] in ["file", "socket", "regkey"]
+                if( (v1["type"] == v2["type"] and v1["type"] in ["unknown", "file"])
+                    or (v1["type"] == v2["type"]
+                        and v1["type"] in ["process", "socket", "regkey"]
                         and v1["name"] == v2["name"])
                     or (v1["name"] == "" and v2["name"] == "" and
                         "process" not in  [v1["type"], v2["type"]]) ):
