@@ -303,18 +303,22 @@ def color_graph(g, seed_file):
             ancestors = ancestors + backward_trace(g, i, depth=0, timestamp=False, min_time=root_min, visited=[])
         print("\t %d ancestors" % (len(ancestors)) )
 
+        # Find the intersection of the ancestors and the descendents.
+        attack_chain = []
         if len(descendents) > 0 and len(ancestors) > 0:
             attack_chain = [vertex for vertex in ancestors if vertex in descendents]
-        '''
-        elif len(ancestors) > 0:
+
+        if len(attack_chain) == 0 and len(ancestors) > 0:
+            print("There is no intersection between the ancestors and descendents. Setting attack chain to ancestors.")
             attack_chain = ancestors
-        elif len(descendents) >0:
+        elif len(attack_chain) == 0 and len(descendents) > 0:
+            print("There is no intersection between the ancestors and descendents. Setting attack chain to descendents.")
             attack_chain = descendents
-        '''
         
-        #print("%d descendents and %d ancestors, %d attack chain" % (len(descendents),
-        #                                                            len(ancestors),
-        #                                                            len(attack_chain)))
+
+        print("%d descendents and %d ancestors, %d attack chain" % (len(descendents),
+                                                                    len(ancestors),
+                                                                    len(attack_chain)))
                                                                     
         # Color attack chain and mark attack_label attribute as True
         for d in attack_chain:
