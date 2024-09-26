@@ -297,14 +297,14 @@ def color_graph(g, seed_file):
         print("Root Causes:")
         for r in root_vertex_ids:
             print_node(g,r,"")
-            descendents = descendents + forward_trace(g, r, depth=0, timestamp=False, max_time=impact_max, visited=[])
+            descendents = descendents + forward_trace(g, r, depth=0, timestamp=False, max_time=impact_max, visited=[], max_depth=False)
         print("\t %d descendents" % (len(descendents)) )
 
         print("Impacts:")
         ancestors = []
         for i in impact_vertex_ids:
             print_node(g,i,"")
-            ancestors = ancestors + backward_trace(g, i, depth=0, timestamp=False, min_time=root_min, visited=[])
+            ancestors = ancestors + backward_trace(g, i, depth=0, timestamp=False, min_time=root_min, visited=[], max_depth=False)
         print("\t %d ancestors" % (len(ancestors)) )
 
         # Find the intersection of the ancestors and the descendents.
