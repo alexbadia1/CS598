@@ -24,7 +24,7 @@ color_dict = {
 } 
 
 
-def forward_trace(g, vertex_id, depth, timestamp, visited, max_time = False, impacts_only = False):
+def forward_trace(g, vertex_id, depth, timestamp, visited, max_time = False, impacts_only = False, max_depth=False):
     
     ancestor = g.vs[vertex_id]
     descendents = []
@@ -35,6 +35,8 @@ def forward_trace(g, vertex_id, depth, timestamp, visited, max_time = False, imp
     
     if vertex_id in visited:
         return descendents
+    elif max_depth and depth > max_depth:
+        return ancestors
     else:
         visited.append(vertex_id)
         
@@ -51,19 +53,21 @@ def forward_trace(g, vertex_id, depth, timestamp, visited, max_time = False, imp
                 #print_edge(g,e.index,"\t" * depth)
                 g.es[e.index]["attack_label"] = True
                 descendents = descendents + forward_trace(g, e.target, depth + 1,
-                                                          int(e["time"]), visited, max_time, impacts_only)
+                                                          int(e["time"]), visited, max_time, impacts_only, max_depth)
 
     if not impacts_only or (impacts_only and terminal_node):
         descendents.append(vertex_id)
 
     return descendents
 
-def backward_trace(g, vertex_id, depth, timestamp, visited, min_time = False, root_causes_only = False):
+def backward_trace(g, vertex_id, depth, timestamp, visited, min_time = False, root_causes_only = False, max_depth = False):
 
     descendent = g.vs[vertex_id]
     ancestors = []
-
+    
     if vertex_id in visited:
+        return ancestors
+    elif max_depth and depth > max_depth:
         return ancestors
     else:
         visited.append(vertex_id)
@@ -80,7 +84,7 @@ def backward_trace(g, vertex_id, depth, timestamp, visited, min_time = False, ro
                 terminal_node = False
                 #print_edge(g,e.index,"\t" * depth)
                 g.es[e.index]["attack_label"] = True
-                ancestors = ancestors + backward_trace(g, e.source, depth + 1,int(e["time"]), visited, min_time, root_causes_only)
+                ancestors = ancestors + backward_trace(g, e.source, depth + 1,int(e["time"]), visited, min_time, root_causes_only, max_depth)
 
     if not root_causes_only or (root_causes_only and terminal_node):
         ancestors.append(vertex_id)
