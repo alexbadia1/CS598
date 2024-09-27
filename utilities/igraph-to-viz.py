@@ -45,7 +45,7 @@ if __name__ == "__main__":
     print("Pruning Vertices...")
     prune_vertices(g, seed_file)        
     #mark_uuids(g)
-    lamport_timestamps(g)
+    
 
     
     print("Plotting %s of size V=%d, E=%d..." %(pdf_file, len(g.vs), len(g.es)))

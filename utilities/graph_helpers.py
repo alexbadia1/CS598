@@ -36,7 +36,7 @@ def forward_trace(g, vertex_id, depth, timestamp, visited, max_time = False, imp
     if vertex_id in visited:
         return descendents
     elif max_depth and depth > max_depth:
-        return ancestors
+        return descendents
     else:
         visited.append(vertex_id)
         
@@ -588,21 +588,25 @@ def merge_vertices(g, seed_file, debug=False):
 
 def lamport_timestamps(g):
 
-    timestamps = []
+    timestamps_e = []
+    timestamps_v = []
     for e in g.es:        
-        timestamps.append(e["time"])
+        timestamps_e.append(e["time"])
     for v in g.vs:
         if "time" in v.attributes():
-            timestamps.append(v["time"])
+            timestamps_v.append(v["time"])
 
-    timestamps.sort()
-        
+    timestamps_e.sort()
+    timestamps_v.sort()
+
     for e in g.es:
-        e["time"] = timestamps.index(e["time"])
+        e["time"] = timestamps_e.index(e["time"])
 
     for v in g.vs:
         if "time" in v.attributes():
-            v["time"] = timestamps.index(v["time"])
+            v["time"] = timestamps_v.index(v["time"])
+
+    g.es["label"] = [t for t in g.es["time"]]
             
 # Find the minimum and maximum access times per vertex.
 # used to scope graph traversals.
