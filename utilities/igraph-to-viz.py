@@ -39,13 +39,13 @@ if __name__ == "__main__":
     print("Pruning Edges...")
     prune_edges(g)
     print("Merging Vertices...")
-    merge_vertices(g)
+    merge_vertices(g, seed_file)
     print("Re-pruning Edges...")
     prune_edges(g)
     print("Pruning Vertices...")
-    prune_vertices(g)        
+    prune_vertices(g, seed_file)        
     #mark_uuids(g)
-    #lamport_timestamps(g)
+    lamport_timestamps(g)
 
     
     print("Plotting %s of size V=%d, E=%d..." %(pdf_file, len(g.vs), len(g.es)))

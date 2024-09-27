@@ -311,6 +311,9 @@ def color_graph(g, seed_file):
         attack_chain = []
         if len(descendents) > 0 and len(ancestors) > 0:
             attack_chain = [vertex for vertex in ancestors if vertex in descendents]
+            # Add root causes and impacts back to the attack chain just to make clear if they're disconnected
+            attack_chain += [vertex for vertex in root_vertex_ids if vertex not in attack_chain]
+            attack_chain += [vertex for vertex in impact_vertex_ids if vertex not in attack_chain]
 
         if len(attack_chain) == 0 and len(ancestors) > 0:
             print("There is no intersection between the ancestors and descendents. Setting attack chain to ancestors.")
@@ -395,10 +398,10 @@ def declone_processes(g):
     for ei in range(0,len(g.es)):
         e1 = g.es[ei]
 
-        if(e1["type"] == "clone" and
+        if(#e1["type"] in ["clone", "procstart", "crossproc", "procend"] and
            g.vs[e1.source]["name"] == g.vs[e1.target]["name"]):
 
-            if e1.target in parent_mapping:
+            if e1.source in parent_mapping:
                 parent_mapping[e1.target] = parent_mapping[e1.source]
             else:
                 parent_mapping[e1.target] = e1.source
@@ -440,12 +443,14 @@ def declone_processes(g):
     g.delete_edges(prune_set_e)
     g.delete_vertices(prune_set_v)
 
-# Remove redundant edges and vertices from graph
+# Remove redundant edges from graph
+# An edge is considered redundant if there is already an edge between
+# the source and the destination target of the same type
 def prune_edges(g, debug=False):
     prune_set_e = []
     for e1 in g.es:
 
-        # Skip if edge is already marked for pruning
+        # Skip if edge 1 is already marked for pruning
         if e1.index in prune_set_e:
             continue
         
@@ -453,7 +458,7 @@ def prune_edges(g, debug=False):
             # Skip if e1 is e2
             if e1.index == e2.index:
                 continue
-            # Skip if edge is already marked for pruning
+            # Skip if edge 2 is already marked for pruning
             elif e2.index in prune_set_e:
                 continue
             # Skip if edges are not of the same type
@@ -480,12 +485,20 @@ def _all_neighbors(g, vi):
     return neighbors
 
     
-# Remove dangling vertices 
-def prune_vertices(g, debug=False):
+# Remove dangling vertices
+# (If they are not root causes or impacts)
+def prune_vertices(g, seed_file, debug=False):
 
+    seed_labels = get_seed_labels(seed_file)
+    
     prune_set_v = []
     for vi in range(0, len(g.vs)):
         v = g.vs[vi]
+        # Skip if this is a root cause or an impact
+        if (v["uuid"] in seed_labels
+            and seed_labels[v["uuid"]] in ["root_cause", "impact"]):
+            continue
+        
         if(len(g.es.select(_source = v.index)) == 0
            and len(g.es.select(_target = v.index)) == 0):
             prune_set_v.append(v.index)
@@ -497,42 +510,54 @@ def prune_vertices(g, debug=False):
 #   and do not convey any additional information flow,
 #   drop the edge to one of the two neighbors.
 # At the end, remove any disconnected vertices
-def merge_vertices(g, debug=False):
+def merge_vertices(g, seed_file, debug=False):
     prune_set_e = []
     prune_set_v = []
+    seed_labels = get_seed_labels(seed_file)
     # Iterate over all nodes
     for v in g.vs:
+        v_uuid = v["uuid"]
+        
         # Skip if v is already marked for deletion
         if v.index in prune_set_v:
             continue
         # Skip if this isn't a process (we'll visit every node either way)
         elif v["type"] != "process":
             continue
-            
+             
         neighbors = _all_neighbors(g, v.index)
         for n1 in range(0,len(neighbors)-1):
             v1 = g.vs[neighbors[n1]]
+            v1_uuid = v1["uuid"]
 
             # Skip if first neighbor is already marked for deletion
             if v1.index in prune_set_v:
                 continue
-                    
+
+            # Skip if this is a root cause or an impact
+            if v1_uuid in seed_labels and seed_labels[v1_uuid] in ["root_cause", "impact"]:
+                continue
+
             for n2 in range(n1+1, len(neighbors)-1):
                 v2 = g.vs[neighbors[n2]]
-
+                v2_uuid = v2["uuid"]
+                
                 # Skip if second neighbor is already marked for deletion
-                # Or if v2 is part of the attack
                 if v2.index in prune_set_v:
+                    continue
+
+                # Skip if this is a root cause or an impact
+                if v2_uuid in seed_labels and seed_labels[v2_uuid] in ["root_cause", "impact"]:
                     continue
 
                 # Merge candidate if both are unknown
                 # Merge candidate if both have same data entity name
                 if( (v1["type"] == v2["type"] and v1["type"] in ["unknown", "file"])
                     or (v1["type"] == v2["type"]
-                        and v1["type"] in ["process", "socket", "regkey"]
-                        and v1["name"] == v2["name"])
-                    or (v1["name"] == "" and v2["name"] == "" and
-                        "process" not in  [v1["type"], v2["type"]]) ):
+                        and v1["type"] in ["file", "socket", "regkey"]
+                        and v1["name"] == v2["name"]) ):
+#                    or (v1["name"] == "" and v2["name"] == "" and
+#                        "process" not in  [v1["type"], v2["type"]]) ):
 
                     node_to_keep = v1
                     node_to_prune = v2
@@ -554,6 +579,8 @@ def merge_vertices(g, debug=False):
                         new_e.update_attributes(e.attributes())
                         prune_set_e.append(e.index)
 
+                    if node_to_keep["name"] != node_to_prune["name"]:
+                        node_to_keep["name"] = "*" 
 
     g.delete_edges(prune_set_e)    
     g.delete_vertices(prune_set_v)
