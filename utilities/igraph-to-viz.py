@@ -11,9 +11,10 @@ from graph_helpers import *
 
 if __name__ == "__main__":
 
-    igraph_file = sys.argv[1]
+    igraph_file: str = sys.argv[1]
 
-    base_fname = igraph_file
+    base_fname: str = igraph_file
+
     if igraph_file.endswith("pkl.xz"):
         base_fname = igraph_file.replace(".pkl.xz", "")
     elif igraph_file.endswith("pickle.xz"):
@@ -22,27 +23,38 @@ if __name__ == "__main__":
         base_fname= igraph_file.replace(".pickle", "")
 
     
-    seed_file = base_fname + ".csv"
-    pdf_file = base_fname + ".pdf"
-    print(seed_file)
-    g = pickle_read(igraph_file)
+    seed_file: str = base_fname + ".csv"
+    pdf_file: str = base_fname + ".pdf"
     
-    print("Relabeling nodes and edges...")
+    print('\nSeed File:', seed_file, '\n')
+
+    g: igraph.Graph = pickle_read(igraph_file)
+    graph_summary(g)
+
+    print("\nRelabeling nodes and edges...\n")
     relabels(g)
-    print("Recovering vertex times...")
+    graph_summary(g)
+
+    print("\nRecovering vertex times...\n")
     vertex_times(g)
-    print("Coloring graph...")
+    graph_summary(g)
+
+    print("\nColoring graph...\n")
     color_graph(g, seed_file)
+    graph_summary(g)
+    
+    print("\nAttack only...\n")
     attack_only(g)
-    print("Decloning processes...")
+
+    print("\nDecloning processes...\n")
     declone_processes(g)
-    print("Pruning Edges...")
+    print("\nPruning Edges...\n")
     prune_edges(g)
-    print("Merging Vertices...")
+    print("\nMerging Vertices...\n")
     merge_vertices(g, seed_file)
-    print("Re-pruning Edges...")
+    print("\nRe-pruning Edges...\n")
     prune_edges(g)
-    print("Pruning Vertices...")
+    print("\nPruning Vertices...\n")
     prune_vertices(g, seed_file)        
     #mark_uuids(g)
     

@@ -26,10 +26,9 @@ color_graph(g, seed_file)
 
 for v in range(0,len(g.vs)):
     vertex = g.vs[v]
-    
-    if "attack_label" in vertex.attributes():
+    if vertex["attack_label"]:
         vertex["label"] = "attack"
-    elif "contaminate_label" in vertex.attributes():
+    elif vertex["contaminate_label"]:
         vertex["label"] = "contaminated"
     else:
         vertex["label"] = "benign"
@@ -61,7 +60,7 @@ for v in range(0,len(g.vs)):
     vertex = g.vs[v]
     time = int(vertex["min_time"])
     vertex_id = vertex["pid"] if "atlasv2" in base_fname else  vertex["uuid"]
-    if vertex_id in seed_labels and seed_labels[vertex_id] in ["root_cause", "impact"]:
+    if seed_labels[vertex_id] in ["root_cause", "impact"]:
         seeds_f.write("%d,%s,\"%s\",%s,%s\n" %
                       (time, vertex["type"], vertex["name"], vertex_id, seed_labels[vertex_id]))
 seeds_f.close()

@@ -1,4 +1,5 @@
 import csv
+import re
 import igraph
 import matplotlib.pyplot as plt
 import os
@@ -120,19 +121,50 @@ def pickle_write(data, path):
     else:
         opener = open
     with opener(path, "wb") as f:
-        pickle.dump(data, f, protocol=config.pickle_protocol)
+        # pickle.dump(data, f, protocol=config.pickle_protocol)
+        pickle.dump(data, f)
+
+
+def graph_summary(g: igraph.Graph):
+    summary = g.summary()
+
+    print("-" * 80)
+
+    print("Graph Summary")
+    for line in summary.split("\n"):
+        print(" ", line)
     
+    vertex_attributes = set()
+    for ig_vertex in g.vs:  # g.vs is a "VertexSeq"
+        vertex_attributes.add(tuple(sorted(ig_vertex.attribute_names())))
+    
+    print("  + vertex_schemas:", vertex_attributes)
+    assert len(vertex_attributes) == 1, "more than 1 vertex schema found"
+
+    vertex_types = set(g.vs["type"])    
+    print("  + vertex_types:", vertex_types)
+
+    print("  + vertex_count:", g.vcount())
+
+    edge_attributes = set()
+    for ig_edge in g.es:  # g.vs is a "VertexSeq"
+        edge_attributes.add(tuple(sorted(ig_edge.attribute_names())))
+    print("  + edge_schemas:", edge_attributes)
+    assert len(edge_attributes) == 1, "more than 1 edge schema found"
+
+    print("  + edge_count:", g.ecount())
+
+    print("-" * 80)
+
 
 # Any dataset-specific relabels go here
-def relabels(g):
+def relabels(g: igraph.Graph):
 
     # Drop leading substrings that match these
     winfile_prefix_filters = []
 
     # Drop ending substrings that come after these matches
     winfile_suffix_filters = []
-
-
     
     for i in range(0,len(g.vs)):
         name = g.vs[i]["name"]
@@ -151,15 +183,15 @@ def relabels(g):
 
         # Remove null prefix from unknown node labels,
         #  replace with empty string
-        if '\x00' in name: 
+        if "\x00" in name: 
             g.vs[i].update_attributes({"name":""})
 
         #######################################
         #      Unixy Hacks
         #######################################            
         # Split unix file paths, keep file name
-        if node_type == "file" and '/' in name:
-            name = name.split('/')
+        if node_type == "file" and "/" in name:
+            name = name.split("/")
             name = name[len(name)-1]
             g.vs[i]["name"] = name
             
@@ -173,13 +205,13 @@ def relabels(g):
         # If executable, always just go with exe name
         #  whether its a file or a process
         if name.endswith(".exe"):
-            name = name.split('\\')
+            name = name.split("\\")
             name = name[len(name)-1]
             g.vs[i]["name"] = name
 
         # Filter windows file paths to make them semi-salient
         #  and semi-collapsable, pure trial and error on these filters
-        if node_type == "file" and '\\' in name:
+        if node_type == "file" and "\\" in name:
             modified = False
 
             for prefix in winfile_prefix_filters:
@@ -193,7 +225,7 @@ def relabels(g):
                     modified = True
             
             if not modified:
-                name = name.split('\\')
+                name = name.split("\\")
                 name = name[len(name)-1]
 
             g.vs[i]["name"] = name
@@ -217,19 +249,23 @@ def mark_uuids(g):
         if g.vs[i]["type"] == "process":
             g.vs[i]["name"] = g.vs[i]["name"]+":"+str(g.vs[i]["uuid"])[:4]
 
+
 def get_seed_labels(seed_file):
 
     seed_labels={}
     if os.path.isfile(seed_file):
-        # Read seed labels in from csv
         try:
-            with open(seed_file,'r') as csvfile:
+            # Read seed labels in from csv
+            with open(seed_file, "r", encoding="utf-16") as csvfile:
                 rdr = csv.reader(csvfile, quotechar="\"")
                 for row in rdr:
                     seed_labels[row[3]] = row[4]
+        except FileNotFoundError:
+            print(f"[FileNotFoundError] File not found: {seed_file}")
+        except csv.Error as e:
+            print(f"[csv.Error] Problem reading CSV file at line {rdr.line_num}: {e}")
         except Exception as e:
-            print("Error: %s" % (e))
-            pdb.set_trace()
+            print(f"[Exception] Unexpected error: {e}")
 
     return seed_labels
 
@@ -311,7 +347,7 @@ def color_graph(g, seed_file):
         attack_chain = []
         if len(descendents) > 0 and len(ancestors) > 0:
             attack_chain = [vertex for vertex in ancestors if vertex in descendents]
-            # Add root causes and impacts back to the attack chain just to make clear if they're disconnected
+            # Add root causes and impacts back to the attack chain just to make clear if they"re disconnected
             attack_chain += [vertex for vertex in root_vertex_ids if vertex not in attack_chain]
             attack_chain += [vertex for vertex in impact_vertex_ids if vertex not in attack_chain]
 
@@ -341,7 +377,7 @@ def color_graph(g, seed_file):
                 print_node(g, vi)
                 #pdb.set_trace()
                         
-    # If there isn't a seed label csv, default to color vertex types
+    # If there isn"t a seed label csv, default to color vertex types
     else:
         g.vs["color"] = [color_dict[t] for t in g.vs["type"]]
 
@@ -521,7 +557,7 @@ def merge_vertices(g, seed_file, debug=False):
         # Skip if v is already marked for deletion
         if v.index in prune_set_v:
             continue
-        # Skip if this isn't a process (we'll visit every node either way)
+        # Skip if this isn"t a process (we"ll visit every node either way)
         elif v["type"] != "process":
             continue
              
@@ -612,12 +648,15 @@ def lamport_timestamps(g):
 # used to scope graph traversals.
 def vertex_times(g):
 
-    g.vs["min_time"] = [0 for n in g.vs["name"]]
+    # Zero out min and max times for all nodes
+    g.vs["min_time"] = [0 for _ in g.vs["name"]]
     g.vs["max_time"] = g.vs["min_time"]
 
     # All edges are assumed to have a "time" timestamp attribute
     # Some formats also have an "etime" end timestamp.
-    # Mirror "time" into "etime" if "etime" doesn't exist.
+    # Mirror "time" into "etime" if "etime" doesn"t exist.
+    #
+    # TODO: Is assuming "time" as the "end timestamp" okay?
     if "etime" not in g.es.attributes():
         g.es["etime"] = [t for t in g.es["time"]]
 
@@ -674,7 +713,7 @@ def merge_excess_sockets(g, seed_file):
         # Skip if v is already marked for deletion
         if v.index in prune_set_v:
             continue
-        # Skip if this isn't a process
+        # Skip if this isn"t a process
         elif v["type"] != "process":
             continue
             

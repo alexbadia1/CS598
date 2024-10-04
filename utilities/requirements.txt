@@ -1,0 +1,4 @@
+igraph
+matplotlib
+pycairo
+pandas
