@@ -150,7 +150,13 @@ LogonUI.exe
 termsrv.dll
 ```
 
-Of all the potential root causes, the rdpclip.exe seems most promising
+Of all the potential root causes, the `rdpclip.exe` seems most promising
+
+Here's some example impacts:
+
+```
+
+```
 
 #### IF THE DUMPED VERTICES (mp1/h3_attack.csv) EXIST:
 
