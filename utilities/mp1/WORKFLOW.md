@@ -120,6 +120,9 @@ However, I'm thinking some potential root causes are:
 # Any incoming RDP connections
 130.126.136.46:3389
 
+# Adjacent attacks
+hostname
+
 # Basically trace through processes involved when receiving an RDP connection
 
 # 1. Local Security Authority Subsystem Service - Handles the authentication process when the RDP client attempts to log in.
